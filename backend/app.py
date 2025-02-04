@@ -40,32 +40,35 @@ class ChatRequest(BaseModel):
 
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
-    try:
-        messages = [{'role': 'user', 'content': request.message}]
-        inputs = tokenizer.apply_chat_template(
-                messages,
-                return_tensor="pt"
-                ).to(model.device)
+    print("HERE")
+    messages = [{'role': 'user', 'content': request.message}]
 
-        outputs = model.generate(
-                inputs,
-                max_new_tokens=500,
-                temperature=0.7,
-                do_sample=True 
-                )
+    inputs = tokenizer.apply_chat_template(
+            messages,
+            # add_generation_prompt=True,
+            return_tensors="pt"
+            ).to(model.device)
 
-        response = tokenizer.decode(
-                outputs[0][len(inputs[0]):],
-                skip_special_tokens=True 
+    outputs = model.generate(
+            inputs,
+            max_new_tokens=500,
+            temperature=0.7,
+            do_sample=True 
+            )
 
-                )
-        return {
-                "response": response,
-                "history": request.history + [request.message]
-                }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    response = tokenizer.decode(
+            outputs[0][len(inputs[0]):],
+            skip_special_tokens=True 
 
+            )
+    print(response)
+    return {
+            "response": response,
+            "history": request.history + [request.message]
+            }
+# except Exception as e:
+#     raise HTTPException(status_code=500, detail=str(e))
+#
 
 
 
