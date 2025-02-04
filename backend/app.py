@@ -4,6 +4,18 @@ from pydantic import BaseModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
+from config_loader import get_hf_token 
+from huggingface_hub import login 
+
+
+try:
+    hf_token = get_hf_token()
+    login(token=hf_token)
+except ValueError as e:
+    print(f"Failed")
+    exit(1)
+
+
 app = FastAPI()
 
 app.add_middleware(
