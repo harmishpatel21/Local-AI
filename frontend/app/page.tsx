@@ -1,7 +1,6 @@
 "use client"
 
 import React, {useState, useRef, useEffect} from 'react';
-import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -42,7 +41,11 @@ const ChatInterface = () => {
                 },
                 body: JSON.stringify({
                     message: userMessage,
-                    history: messages.filter(m => m.role === 'user').map(m => m.content)
+                    history: messages.map(m => ({
+                        role: m.role,
+                        content: m.content.replace(/▌$/, '')
+                    }))
+                    // history: messages.filter(m => m.role === 'user').map(m => m.content)
                 })
             });
 
@@ -65,7 +68,7 @@ const ChatInterface = () => {
                     const lastIndex = newMessages.length - 1;
                     newMessages[lastIndex] = {
                         role: 'assistant',
-                        content: assistantMessage + '▌'
+                        content: assistantMessage + (done ? '': '▌')
                     };
                     return newMessages;
                 });
@@ -77,31 +80,11 @@ const ChatInterface = () => {
                 const lastIndex = newMessages.length - 1;
                 newMessages[lastIndex] = {
                     role: 'assistant',
-                    content: assistantMessage
+                    content: assistantMessage 
                 };
                 return newMessages;
             });
 
-
-            // Simulate streaming response
-            // const responseText = response.data.response
-            // const words = responseText.split(' ')
-            // let currentMessage = ''
-
-            // for (const word of words) {
-            //     currentMessage += word + ' '
-            //     setMessages(prev => {
-            //         const lastMessage = prev[prev.length - 1]
-            //         if (lastMessage?.role === 'assistant') {
-            //             return [
-            //                 ...prev.slice(0, -1),
-            //                 { role: 'assistant', content: currentMessage }
-            //             ]
-            //         }
-            //         return [...prev, { role: 'assistant', content: currentMessage }]
-            //     })
-            //     await new Promise(resolve => setTimeout(resolve, 50))
-            // }
         } catch (error) {
             console.error('Chat error:', error)
             setMessages(prev => [
@@ -158,7 +141,6 @@ const ChatInterface = () => {
         className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" // Added text color
         disabled={isLoading}
         />
-        {/* ... rest of the form ... */}
         </form>
         </div>
    )

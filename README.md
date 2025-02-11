@@ -12,24 +12,20 @@ python -m venv venv
 venv\Script\activate   // For Windows
 ```
 
-```
-mkdir models
-cd models
-git clone https://github.com/mistralai/mistral-src.git
-cd mistral-src
-pip install -e .
-```
+### Install Ollama
+`https://ollama.com/`
+once installed, open terminal: `ollama pull deepseek-r1:8b`
 
 ### Backend libraries
-`pip install torch transformers fastapi uvicorn sentencepiece accelerate python-dotenv requests`
+`pip install langchain-community ollama`
 
 ### Start a backend
 `python -m uvicorn app:app --reload --port 8000`
 `python app.py`
 
 ### Frontend libraries
-`npm install @mui/material @emotion/react @emotion/styled axios`
-`npm install @`
+`npm install @mui/material @emotion/react @emotion/styled`
+`npm install react-markdown remark-gfm rehype-highlight highlight.js`
 
 ### Frontend start
 `npm start`
