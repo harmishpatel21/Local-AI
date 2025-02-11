@@ -33,39 +33,88 @@ const ChatInterface = () => {
         setIsLoading(true)
 
         try {
-            const response = await axios.post('http://localhost:8000/chat', {
-                message: userMessage
-            })
+            setMessages(prev => [...prev, {role: 'assistant', content: ''}]);
+
+            const response = await fetch('http://localhost:8000/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: userMessage,
+                    history: messages.filter(m => m.role === 'user').map(m => m.content)
+                })
+            });
+
+            if (!response.body) throw new Error('No response body');
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let assistantMessage = '';
+
+            while (true) {
+                const { done, value} = await reader.read();
+                if (done) break;
+
+                // Append new chunk to message
+                assistantMessage += decoder.decode(value, {stream: true});
+                
+                // Update only the last message
+                setMessages(prev => {
+                    const newMessages = [...prev];
+                    const lastIndex = newMessages.length - 1;
+                    newMessages[lastIndex] = {
+                        role: 'assistant',
+                        content: assistantMessage + '▌'
+                    };
+                    return newMessages;
+                });
+            }
+
+            // Remove typing indicator after completion
+            setMessages(prev => {
+                const newMessages = [...prev];
+                const lastIndex = newMessages.length - 1;
+                newMessages[lastIndex] = {
+                    role: 'assistant',
+                    content: assistantMessage
+                };
+                return newMessages;
+            });
+
 
             // Simulate streaming response
-            const responseText = response.data.response
-            const words = responseText.split(' ')
-            let currentMessage = ''
+            // const responseText = response.data.response
+            // const words = responseText.split(' ')
+            // let currentMessage = ''
 
-            for (const word of words) {
-                currentMessage += word + ' '
-                setMessages(prev => {
-                    const lastMessage = prev[prev.length - 1]
-                    if (lastMessage?.role === 'assistant') {
-                        return [
-                            ...prev.slice(0, -1),
-                            { role: 'assistant', content: currentMessage }
-                        ]
-                    }
-                    return [...prev, { role: 'assistant', content: currentMessage }]
-                })
-                await new Promise(resolve => setTimeout(resolve, 50))
-            }
+            // for (const word of words) {
+            //     currentMessage += word + ' '
+            //     setMessages(prev => {
+            //         const lastMessage = prev[prev.length - 1]
+            //         if (lastMessage?.role === 'assistant') {
+            //             return [
+            //                 ...prev.slice(0, -1),
+            //                 { role: 'assistant', content: currentMessage }
+            //             ]
+            //         }
+            //         return [...prev, { role: 'assistant', content: currentMessage }]
+            //     })
+            //     await new Promise(resolve => setTimeout(resolve, 50))
+            // }
         } catch (error) {
             console.error('Chat error:', error)
             setMessages(prev => [
                 ...prev,
-                { role: 'assistant', content: '**Error:** Unable to get response' }
-            ])
+                { 
+                    role: 'assistant', 
+                    content: '**Error:** ' + (error instanceof Error ? error.message : 'Failed to get response')
+                }
+            ]);
         } finally {
             setIsLoading(false)
         }
-    }
+    };
 
     return (
         
