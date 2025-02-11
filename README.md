@@ -21,10 +21,18 @@ pip install -e .
 ```
 
 ### Backend libraries
-`pip install torch transformers fastapi uvicorn sentencepiece accelerate`
+`pip install torch transformers fastapi uvicorn sentencepiece accelerate python-dotenv requests`
+
+### Start a backend
+`python -m uvicorn app:app --reload --port 8000`
+`python app.py`
 
 ### Frontend libraries
 `npm install @mui/material @emotion/react @emotion/styled axios`
+`npm install @`
 
+### Frontend start
+`npm start`
+`npm run dev`
 
 
