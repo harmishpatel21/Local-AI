@@ -1,0 +1,27 @@
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .crt-effect::before {
+    content: "";
+    @apply absolute inset-0 w-full h-full;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 243, 255, 0.1) 0%,
+      rgba(0, 243, 255, 0) 10%
+    );
+    animation: scanline 6s linear infinite;
+  }
+  
+  .cyber-scroll {
+    @apply scrollbar-thin scrollbar-track-void-black scrollbar-thumb-cyber-green scrollbar-thumb-rounded;
+    scrollbar-color: theme('colors.cyber-green') theme('colors.void-black');
+  }
+}
+
+/* If you have custom utilities */
+@layer utilities {
+  .glow-animation {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+}
