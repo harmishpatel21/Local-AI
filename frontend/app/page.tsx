@@ -1,10 +1,15 @@
 "use client"
 
 import React, {useState, useRef, useEffect} from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
-import 'highlight.js/styles/atom-one-dark.css'
+import 'highlight.js/styles/atom-one-dark.css';
+
+import { ChatMessage } from './components/chat/ChatMessage';
+import { LoadingIndicator } from './components/chat/LoadingIndicator';
+import { ChatInput } from './components/chat/ChatInput';
+import './styles/globals.css';
+import './styles/theme/cyberpunk.css';
+import './styles/components/animations.css';
+import './styles/components/scrollbars.css';
 
 
 const ChatInterface = () => {
@@ -100,48 +105,21 @@ const ChatInterface = () => {
     };
 
     return (
-        
-        <div className="flex flex-col h-screen max-w-3xl mx-auto p-4 bg-gray-50">
-        <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+        <div className="flex flex-col h-screen max-w-3xl mx-auto p-4 bg-void-black">
+        <div className="flex-1 overflow-y-auto mb-4 space-y-4 cyber-scroll">
         {messages.map((msg, index) => (
-            <div
-            key={index}
-            className={`p-4 rounded-lg ${
-                msg.role === 'user' 
-                    ? 'bg-blue-100 ml-8 text-gray-900'  // Added text color
-                    : 'bg-green-100 mr-8 text-gray-900' // Added text color
-            }`}
-            >
-            <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeHighlight]}
-            className="prose text-gray-900" // Added text color
-            >
-            {msg.content}
-            </ReactMarkdown>
-            </div>
+            <ChatMessage key={index} role={msg.role} content={msg.content} />
         ))}
-        {isLoading && (
-            <div className="p-4 rounded-lg bg-green-100 mr-8 text-gray-900"> {/* Added text color */}
-            <div className="flex items-center space-x-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700"></div>
-            <span>Thinking...</span>
-            </div>
-            </div>
-        )}
+        {isLoading && <LoadingIndicator />}
         <div ref={messagesEndRef} />
         </div>
 
-        <form onSubmit={handleSubmit} className="flex gap-2">
-        <input
-        type="text"
+        <ChatInput
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Type your message..."
-        className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white" // Added text color
-        disabled={isLoading}
+        onSubmit={handleSubmit}
+        isLoading={isLoading}
         />
-        </form>
         </div>
    )
 }
