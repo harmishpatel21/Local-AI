@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import './theme/cyberpunk.css';
+@import './components/animations.css';
+@import './components/scrollbars.css';
+
+/* Base styles */
+body {
+  @apply bg-void-black text-cyber-white font-mono;
+}
+
+@layer base {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #e0e0e0;
+  }
+}
