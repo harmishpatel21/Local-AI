@@ -4,6 +4,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 # from langchain_community.llms import Ollama
 import logging 
+import asyncio
 
 from langchain_ollama import ChatOllama
 from langchain.schema import HumanMessage, AIMessage, SystemMessage
@@ -51,13 +52,18 @@ async def chat_endpoint(request: ChatRequest):
 
         async def generate():
             full_response = ""
-            async for chunk in chain.astream({
-                "input": request.message,
-                "history": history_message
-            }):
-                if chunk.content:
-                    full_response += chunk.content
-                    yield chunk.content
+            try:
+                async for chunk in chain.astream({
+                    "input": request.message,
+                    "history": history_message
+                }):
+                    if chunk.content:
+                        full_response += chunk.content
+                        yield chunk.content
+            except asyncio.CancelledError:
+                # Handle client disconnection
+                logging.info("Client disconnected during streaming")
+                raise
 
         return StreamingResponse(
             generate(),
