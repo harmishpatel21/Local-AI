@@ -17,6 +17,7 @@ const ChatInterface = () => {
     const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
     const [isLoading, setIsLoading] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const abortController = useRef<AbortController | null>(null)
 
     // Auto-scroll to bottom when messages change
     const scrollToBottom = () => {
@@ -36,7 +37,10 @@ const ChatInterface = () => {
         setMessages(prev => [...prev, { role: 'user', content: userMessage }])
         setIsLoading(true)
 
+        let assistantMessage = '';
+
         try {
+            abortController.current = new AbortController()
             setMessages(prev => [...prev, {role: 'assistant', content: ''}]);
 
             const response = await fetch('http://localhost:8000/chat', {
@@ -44,6 +48,7 @@ const ChatInterface = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                signal: abortController.current.signal,
                 body: JSON.stringify({
                     message: userMessage,
                     history: messages.map(m => ({
@@ -91,16 +96,44 @@ const ChatInterface = () => {
             });
 
         } catch (error) {
-            console.error('Chat error:', error)
-            setMessages(prev => [
-                ...prev,
-                { 
-                    role: 'assistant', 
-                    content: '**Error:** ' + (error instanceof Error ? error.message : 'Failed to get response')
-                }
-            ]);
+            if (error instanceof Error && error.name === 'AbortError') {
+                setMessages(prev => {
+                    const newMessages = [...prev];
+                    const lastIndex = newMessages.length - 1;
+                    newMessages[lastIndex] = {
+                        role: 'assistant',
+                        content: assistantMessage 
+                    };
+                    return newMessages;
+                });
+            } else if (error instanceof Error) {
+                console.error('Chat error:', error);
+                setMessages(prev => [
+                    ...prev,
+                    { 
+                        role: 'assistant', 
+                        content: '**Error:** ' + error.message
+                    }
+                ]);
+            } else {
+                console.error('Unknown error:', error);
+                setMessages(prev => [
+                    ...prev,
+                    { 
+                        role: 'assistant', 
+                        content: '**Error:** An unknown error occurred'
+                    }
+                ]);
+            }
         } finally {
             setIsLoading(false)
+            abortController.current = null
+        }
+    };
+
+    const handleStop = () => {
+        if (abortController.current) {
+            abortController.current.abort()
         }
     };
 
@@ -118,6 +151,7 @@ const ChatInterface = () => {
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onSubmit={handleSubmit}
+        onStop={handleStop}
         isLoading={isLoading}
         />
         </div>
