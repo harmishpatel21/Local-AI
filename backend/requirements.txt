@@ -3,3 +3,6 @@ uvicorn
 langchain-ollama
 ollama
 langchain
+discord.py 
+python-dotenv
+aiohttp
