@@ -26,14 +26,20 @@ PROMPT_TEMPLATE = ChatPromptTemplate.from_messages([
     HumanMessagePromptTemplate.from_template("{input}")
 ])
 
-# llm = Ollama(
-#     model="deepseek-r1:8b",
-#     num_gpu=1
-# )
+# model define
+chat = ChatOllama(
+    model='deepseek-r1:8b', 
+    num_gpu=1,
+    num_ctx=4096,
+    temperature=0.7,
+    repeat_penalty=1.2,
+    num_thread=4
+    )
 
 class ChatRequest(BaseModel):
     message: str
     history: list = []
+
 
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
@@ -47,8 +53,13 @@ async def chat_endpoint(request: ChatRequest):
 
         # history_message.append(HumanMessage(content=request.message))
 
-        chat = ChatOllama(model='deepseek-r1:8b', num_gpu=1)
-        chain = PROMPT_TEMPLATE | chat 
+        
+        chain = PROMPT_TEMPLATE | chat.bind(
+            format='json',
+            options={
+                "main_gpu": 0,
+            }
+        ) 
 
         async def generate():
             full_response = ""
