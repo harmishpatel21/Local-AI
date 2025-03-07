@@ -70,8 +70,75 @@ def update_history(channel_id: int, user_msg: str, ai_response: str):
     conversation_history[channel_id] = history[-20:]
 
 async def send_chunked_messages(ctx: commands.Context, text: str):
-    """Split long messages for Discord"""
-    chunks = [text[i:i+2000] for i in range(0, len(text), 2000)]
+    """Split messages while preserving markdown formatting"""
+    
+    # Maximum Discord message length
+    MAX_LENGTH = 1990
+    
+    # Helper function to find closing code block
+    def find_code_block_end(text: str, start: int) -> int:
+        return text.find("```", start + 3)
+    
+    chunks = []
+    current_chunk = ""
+    i = 0
+    
+    while i < len(text):
+        # Handle code blocks
+        if text[i:i+3] == "```":
+            # Find the end of the code block
+            code_end = find_code_block_end(text, i)
+            if code_end == -1:  # No closing block found
+                code_block = text[i:]
+                i = len(text)
+            else:
+                code_block = text[i:code_end+3]
+                i = code_end + 3
+            
+            # If current chunk plus code block would be too long, split
+            if len(current_chunk) + len(code_block) > MAX_LENGTH:
+                if current_chunk:
+                    chunks.append(current_chunk)
+                    current_chunk = ""
+                
+                # If code block itself is too long, split it
+                if len(code_block) > MAX_LENGTH:
+                    # Preserve the language specification if present
+                    first_newline = code_block.find('\n')
+                    lang_spec = code_block[:first_newline] if first_newline != -1 else "```"
+                    
+                    code_content = code_block[first_newline+1:] if first_newline != -1 else code_block[3:-3]
+                    
+                    while code_content:
+                        chunk_content = code_content[:MAX_LENGTH-8]  # Leave room for ``` markers
+                        code_content = code_content[MAX_LENGTH-8:]
+                        
+                        if chunks:  # Not the first chunk
+                            chunks.append(f"```\n{chunk_content}")
+                        else:  # First chunk - include language
+                            chunks.append(f"{lang_spec}\n{chunk_content}")
+                        
+                        if not code_content:  # Last chunk
+                            chunks[-1] = chunks[-1] + "\n```"
+                else:
+                    chunks.append(code_block)
+            else:
+                current_chunk += code_block
+            
+            continue
+        
+        # Handle regular text
+        if len(current_chunk) >= MAX_LENGTH:
+            chunks.append(current_chunk)
+            current_chunk = ""
+        
+        current_chunk += text[i]
+        i += 1
+    
+    if current_chunk:
+        chunks.append(current_chunk)
+    
+    # Send all chunks
     for chunk in chunks:
         await ctx.send(chunk)
 
